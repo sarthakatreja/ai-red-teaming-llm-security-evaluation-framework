@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c111e">
+  <title>AI Red-Teaming &amp; LLM Security Evaluation Framework</title>
+  <link rel="icon" href="/favicon.ico" type="image/vnd.microsoft.icon">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#overview">Skip to dashboard</a>
+  <div class="layout">
+    <aside class="rail">
+      <a class="wordmark" href="#overview">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>LLM Security <small>Evaluation lab</small></span>
+      </a>
+      <nav class="nav" aria-label="Dashboard">
+        <a href="#overview" aria-current="location"><span class="nav-icon icon-grid" aria-hidden="true"></span>Overview</a>
+        <a href="#findings"><span class="nav-icon icon-list" aria-hidden="true"></span>Findings</a>
+        <a href="#methodology"><span class="nav-icon icon-notes" aria-hidden="true"></span>Methodology</a>
+      </nav>
+      <div class="rail-footer">
+        <a href="/api/docs" class="api-link" target="_blank" rel="noopener">API reference <span class="external-icon" aria-hidden="true"></span></a>
+        <p>Local workspace · Synthetic data</p>
+      </div>
+    </aside>
+
+    <main class="workspace" id="overview" tabindex="-1">
+      <div class="topbar">
+        <span>Evaluation workspace</span>
+        <span class="health" id="health" data-state="pending" role="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="health-label">Checking API</span>
+        </span>
+      </div>
+
+      <header class="hero">
+        <h1>AI Red-Teaming &amp; LLM Security <span>Evaluation Framework</span></h1>
+        <p>Run synthetic scenarios, review response indicators and export evidence.</p>
+      </header>
+
+      <section class="panel runner" aria-labelledby="run-heading">
+        <div class="runner-main">
+          <div class="section-heading">
+            <div>
+              <h2 id="run-heading">Run an evaluation</h2>
+              <p id="target-help">The reference simulation returns a fixture marker in each response.</p>
+            </div>
+            <span class="mode-tag" id="mode-tag" data-mode="simulation">Reference simulation</span>
+          </div>
+          <form class="controls" id="evaluation-form">
+            <div class="field">
+              <label for="target">Evaluation target</label>
+              <select id="target" name="target" aria-describedby="target-help">
+                <option value="reference_vulnerable">Vulnerable reference simulation</option>
+                <option value="reference_secure">Hardened reference simulation</option>
+                <option value="ollama">Local Ollama model</option>
+              </select>
+            </div>
+            <div class="field" id="model-field" hidden>
+              <label for="model">Installed model</label>
+              <input id="model" name="model" value="llama3.2:3b" maxlength="100" required disabled
+                pattern="[A-Za-z0-9][A-Za-z0-9_.:\-]{0,99}" spellcheck="false" autocapitalize="none" autocomplete="off">
+            </div>
+            <button class="primary-button" id="run" type="submit" disabled>
+              <span class="run-icon" aria-hidden="true"></span>
+              <span id="run-label">Run evaluation</span>
+            </button>
+          </form>
+        </div>
+        <div class="run-notice" id="notice" data-state="ready" role="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <div><strong id="notice-title">Ready to run</strong><span id="notice-text">Select a target to evaluate the scenario catalogue.</span></div>
+        </div>
+        <noscript>Enable JavaScript to run evaluations from the dashboard.</noscript>
+      </section>
+
+      <section class="metrics" aria-label="Evaluation summary">
+        <article class="panel metric" data-tone="cyan">
+          <span class="metric-icon icon-grid" aria-hidden="true"></span>
+          <div><h2>Scenarios</h2><strong class="metric-value" id="total">—</strong><small id="total-note">Catalogue cases</small></div>
+        </article>
+        <article class="panel metric" data-tone="coral">
+          <span class="metric-icon icon-observed" aria-hidden="true"></span>
+          <div><h2>Indicators observed</h2><strong class="metric-value" id="observed">—</strong><small>Matching fixture labels</small></div>
+        </article>
+        <article class="panel metric" data-tone="mint">
+          <span class="metric-icon icon-clear" aria-hidden="true"></span>
+          <div><h2>No indicator</h2><strong class="metric-value" id="not-observed">—</strong><small>Completed without a match</small></div>
+        </article>
+        <article class="panel metric" data-tone="purple">
+          <span class="metric-icon icon-error" aria-hidden="true"></span>
+          <div><h2>Evaluation errors</h2><strong class="metric-value" id="errors">—</strong><small>Cases without a result</small></div>
+        </article>
+      </section>
+
+      <div class="analysis-grid">
+        <section class="panel chart-panel" aria-labelledby="category-heading">
+          <div class="section-heading">
+            <div><h2 id="category-heading">Category breakdown</h2><p>Indicators observed by security category</p></div>
+          </div>
+          <div class="legend" aria-label="Chart legend">
+            <span data-key="observed"><i aria-hidden="true"></i>Observed</span>
+            <span data-key="clear"><i aria-hidden="true"></i>No indicator</span>
+            <span data-key="error"><i aria-hidden="true"></i>Error</span>
+          </div>
+          <ul class="category-list" id="categories">
+            <li class="empty-state">Loading the scenario catalogue…</li>
+          </ul>
+        </section>
+
+        <section class="panel execution-panel" aria-labelledby="execution-heading">
+          <div class="section-heading"><h2 id="execution-heading">Run details</h2></div>
+          <div class="rate-block">
+            <div class="rate-ring" id="rate-ring"><span id="rate-value">—</span></div>
+            <div><strong>Indicator rate</strong><p id="rate-context">Share of completed cases</p></div>
+          </div>
+          <dl class="execution-list">
+            <div><dt>Target</dt><dd id="run-target">—</dd></div>
+            <div><dt>Started</dt><dd id="run-time">—</dd></div>
+            <div><dt>Wall time</dt><dd id="run-duration">—</dd></div>
+          </dl>
+        </section>
+      </div>
+
+      <section id="findings" class="panel findings" aria-labelledby="findings-heading">
+        <div class="section-heading">
+          <div><h2 id="findings-heading">Findings explorer</h2><p id="findings-caption">Run an evaluation to inspect responses.</p></div>
+          <div class="exports" aria-label="Download current report">
+            <button type="button" class="secondary-button" id="csv" disabled aria-label="Download CSV"><span aria-hidden="true">↓</span> CSV</button>
+            <button type="button" class="secondary-button" id="json" disabled aria-label="Download JSON"><span aria-hidden="true">↓</span> JSON</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="filter-fields">
+            <div class="field">
+              <label for="category-filter">Category</label>
+              <select id="category-filter"><option value="">All categories</option></select>
+            </div>
+            <div class="field">
+              <label for="status-filter">Outcome</label>
+              <select id="status-filter" disabled>
+                <option value="">All outcomes</option>
+                <option value="indicator_observed">Indicator observed</option>
+                <option value="no_indicator_observed">No indicator</option>
+                <option value="error">Error</option>
+              </select>
+            </div>
+          </div>
+          <span class="result-count" id="result-count" role="status"></span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" class="scenario-column">Scenario</th>
+              <th scope="col" class="table-extra category-column">Category</th>
+              <th scope="col" class="table-extra mapping-column">OWASP theme</th>
+              <th scope="col" class="outcome-column">Outcome</th>
+              <th scope="col" class="table-extra elapsed-column">Elapsed</th>
+            </tr>
+          </thead>
+          <tbody id="rows"><tr><td colspan="5" class="empty-state">Loading scenarios…</td></tr></tbody>
+        </table>
+      </section>
+
+      <section id="methodology" class="panel methodology" aria-labelledby="methodology-heading">
+        <div class="section-heading"><h2 id="methodology-heading">Methodology</h2></div>
+        <div class="method-grid">
+          <div><h3>Reference simulations</h3><p>Scripted replies demonstrate how the pipeline reports positive and negative outcomes.</p></div>
+          <div><h3>Response markers</h3><p>Exact text matches are signals for review. Errors are excluded from the indicator rate.</p></div>
+          <div><h3>Local model</h3><p>Ollama runs benign control exercises with synthetic data. The exercises have no tools or external targets.</p></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
